@@ -14,7 +14,8 @@ def ensure_not_empty(params):
             raise ValueError('{} cannot be null or empty'.format(pretty_name))
 
 # All times are UTC time
-DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+DATE_FORMAT = '%Y-%m-%d'
+DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 _API_URL = 'http://a.wunderlist.com/api'
 
 class _Endpoints:

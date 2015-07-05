@@ -101,7 +101,6 @@ def daily_task_log_formatter(tasks):
     list_formatter = lambda list_title, tasks : u'{}\n{}'.format('## ' + list_title, u'\n'.join(map(task_formatter, tasks)))
     list_strs = [ list_formatter(list_title, list_tasks) for list_title, list_tasks in tasks.iteritems() ]
     output = '\n\n'.join(list_strs) + '\n'
-    print type(output)
     return output
 
 def write_tasks_to_file(tasks, output_dirpath):
