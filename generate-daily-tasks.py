@@ -1,4 +1,5 @@
 # This script will pull down Wunderlist tasks, find the ones slated for today, email them to a given email address, and log them to a file
+# TODO Create a Smooth Mechanism client that reads config files and all that jazz so we don't have to pass crap around everywhere
 
 import wunderclient
 import sys
@@ -20,9 +21,15 @@ EMAIL_SUBJECT_FORMAT_STR = "Today's Goals: {}"
 OUTPUT_FILE_DATE_FORMAT = '%Y-%m-%d'
 OUTPUT_FILENAME_FORMAT_STR = '{}_tasks.md'
 
+# Constants related to writing the checkpoint file written every morning and (hopefully) cleaned up every night
+CHECKPOINT_FILE_DATE_FORMAT = '%Y-%m-%d'
+CHECKPOINT_FILENAME_FORMAT_STR = '{}_tasks.checkpoint'
+
 CREDS_FILEPATH_ARGVAR = "creds_filepath"
 EMAIL_TARGET_ARGVAR = "email_target_address"
-OUTPUT_DIRPATH_ARGVAR = "output_dirpath"
+SMOOTH_MECHANISM_DIRPATH_ARGVAR = "smooth_mechanism_dirpath"
+
+DAILY_TASKS_DIRNAME = "daily_tasks"
 
 CREDS_FILE_CLIENT_ID_KEY = "client_id"
 CREDS_FILE_ACCESS_TOKEN_KEY = "access_token"
@@ -32,7 +39,7 @@ def parse_args():
     parser.add_argument(CREDS_FILEPATH_ARGVAR, metavar="<Wunderlist creds file>", help="JSON file to pull Wunderlist API creds from")
     # TODO Make email address and output file optional args that only get written to if they exist
     parser.add_argument(EMAIL_TARGET_ARGVAR, metavar="<destination email address>", help="email address to mail today's goals to")
-    parser.add_argument(OUTPUT_DIRPATH_ARGVAR, metavar="<output dir>", help="file to log today's goals to")
+    parser.add_argument(SMOOTH_MECHANISM_DIRPATH_ARGVAR, metavar="<Smooth Mechanism dir>", help="root directory of all Smooth Mechanism tracking")
     # TODO file name format
     # TODO other types of output pipes
     return vars(parser.parse_args())
@@ -103,17 +110,30 @@ def daily_task_log_formatter(tasks):
     output = '\n\n'.join(list_strs) + '\n'
     return output
 
-def write_tasks_to_file(tasks, output_dirpath):
+def write_daily_tasks_report(tasks, smooth_mechanism_dirpath):
+    ''' Writes the daily tasks to a Markdown file '''
+    output_dirpath= os.path.join(smooth_mechanism_dirpath, DAILY_TASKS_DIRNAME)
+    if not os.path.isdir(output_dirpath):
+        os.mkdirs(output_dirpath)
     today_str = datetime.date.strftime(datetime.date.today(), OUTPUT_FILE_DATE_FORMAT)
     output_filepath = os.path.join(output_dirpath, OUTPUT_FILENAME_FORMAT_STR.format(today_str))
     with open(output_filepath, 'w') as output_fp:
         output_fp.write(daily_task_log_formatter(tasks))
 
+def write_tasks_checkpoint_file(tasks, smooth_mechanism_dirpath):
+    ''' Stores the state of what was set out to be accomplished in the morning, so at the end of the day we can compare '''
+    # TODO If we want a full synposis, we're going to have to save ALL tasks because what if I get something done that wasn't on my list? There's no way to identify it.
+    # TODO Error-checking, or something
+    today_str = datetime.date.strftime(datetime.date.today(), CHECKPOINT_FILE_DATE_FORMAT)
+    checkpoint_filepath = os.path.join(smooth_mechanism_dirpath, CHECKPOINT_FILENAME_FORMAT_STR.format(today_str))
+    with io.open(checkpoint_filepath, 'w', encoding="utf8") as checkpoint_fp:
+        checkpoint_fp.write(json.dumps(tasks, ensure_ascii=False))
+
 def generate_daily_tasks(args):
     ''' Pulls down today's due and overdue tasks from Wunderlist, writes them to file, and drafts a new email with office-only tasks in the default email client to the given email address '''
     creds_filepath = args[CREDS_FILEPATH_ARGVAR]
     email_addressee = args[EMAIL_TARGET_ARGVAR]
-    output_dirpath = args[OUTPUT_DIRPATH_ARGVAR]
+    smooth_mechanism_dirpath = args[SMOOTH_MECHANISM_DIRPATH]
 
     client_id, access_token = parse_creds_file(creds_filepath)
     client = wunderclient.WunderClient(access_token, client_id)
@@ -127,10 +147,10 @@ def generate_daily_tasks(args):
             todays_tasks[list_title] = list_due_tasks
 
     open_work_tasks_email(todays_tasks, email_addressee)
-    write_tasks_to_file(todays_tasks, output_dirpath)
-
-    # TODO Save state so we can pick back up where we left off at the end of the day as we close out
+    write_daily_tasks_report(todays_tasks, smooth_mechanism_dirpath)
+    write_tasks_checkpoint_file(todays_tasks, smooth_mechanism_dirpath)
 
 args = parse_args()
 validate_args(args)
 generate_daily_tasks(args)
+# TODO Do stuff with writing in markdown and it getting put into Google Drive, too
