@@ -29,7 +29,7 @@ CREDS_FILEPATH_ARGVAR = "creds_filepath"
 EMAIL_TARGET_ARGVAR = "email_target_address"
 SMOOTH_MECHANISM_DIRPATH_ARGVAR = "smooth_mechanism_dirpath"
 
-DAILY_TASKS_DIRNAME = "daily_tasks"
+DAILY_TASKS_DIRNAME = "daily-tasks"
 
 CREDS_FILE_CLIENT_ID_KEY = "client_id"
 CREDS_FILE_ACCESS_TOKEN_KEY = "access_token"
@@ -114,7 +114,7 @@ def write_daily_tasks_report(tasks, smooth_mechanism_dirpath):
     ''' Writes the daily tasks to a Markdown file '''
     output_dirpath= os.path.join(smooth_mechanism_dirpath, DAILY_TASKS_DIRNAME)
     if not os.path.isdir(output_dirpath):
-        os.mkdirs(output_dirpath)
+        os.makedirs(output_dirpath)
     today_str = datetime.date.strftime(datetime.date.today(), OUTPUT_FILE_DATE_FORMAT)
     output_filepath = os.path.join(output_dirpath, OUTPUT_FILENAME_FORMAT_STR.format(today_str))
     with open(output_filepath, 'w') as output_fp:
@@ -133,7 +133,7 @@ def generate_daily_tasks(args):
     ''' Pulls down today's due and overdue tasks from Wunderlist, writes them to file, and drafts a new email with office-only tasks in the default email client to the given email address '''
     creds_filepath = args[CREDS_FILEPATH_ARGVAR]
     email_addressee = args[EMAIL_TARGET_ARGVAR]
-    smooth_mechanism_dirpath = args[SMOOTH_MECHANISM_DIRPATH]
+    smooth_mechanism_dirpath = args[SMOOTH_MECHANISM_DIRPATH_ARGVAR]
 
     client_id, access_token = parse_creds_file(creds_filepath)
     client = wunderclient.WunderClient(access_token, client_id)
