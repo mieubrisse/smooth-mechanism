@@ -11,6 +11,7 @@ import urllib
 from itertools import chain
 import os
 import io
+import re
 
 # Constants related to sending the office tasks daily status email
 OFFICE_LIST_TITLE_PREFIX = "Office/"
@@ -33,6 +34,20 @@ DAILY_TASKS_DIRNAME = "daily-tasks"
 
 CREDS_FILE_CLIENT_ID_KEY = "client_id"
 CREDS_FILE_ACCESS_TOKEN_KEY = "access_token"
+
+SENSITIVE_TASK_FLAG = "!"
+TASK_FLAGS = [SENSITIVE_TASK_FLAG]
+# First group is time costing, second group is flags, third group is task contents
+MINUTE_COSTING_INDICATOR = 'm'
+HOUR_COSTING_INDICATOR = 'h'
+DAY_COSTING_INDICATOR = 'd'
+HOURS_IN_DAY = 5    # For the purposes of work costing, 1d = 5h. TODO Because this also needs to handle personal time as well, figure out a better method
+COSTING_INDICATOR_PARSER = '[mhdMHD]'   # TODO I probably *should* have this be somethign like MINUTE_COSTING_INDICATOR.lower(), MINUTE_COSTING_INDICATOR.upper()... but, meh
+TIME_COSTING_PARSER = '(\d+\.?\d*)({})'.format(COSTING_INDICATOR_PARSER)
+TASK_PARSER = '[\[(]?(\d+\.?\d*{})?[)\]]?\s*-?\s*([{}])*\s*(.*)'.format(COSTING_INDICATOR_PARSER, "".join(SENSITIVE_TASK_FLAG))
+TASK_COSTING_KEY = 'time_costing'
+TASK_FLAGS_KEY = 'flags'
+TASK_CONTENTS_KEY = 'contents'
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -68,6 +83,37 @@ def task_due_filter(task):
     due_date = datetime.datetime.strptime(str(task[wunderclient.Task.due_date]), wunderclient.DATE_FORMAT).date()
     return due_date <= datetime.date.today()
 
+def parse_task(task):
+    ''' Parses the task into an object containing the task's time costing in minutes, flags, and contents, or None if the task could not be parsed '''
+    title = task[wunderclient.Task.title]
+    print "Title: {}".format(title)
+    match = re.match(TASK_PARSER, title)
+    if match is None:
+        return None
+    costing_str = match.group(1)
+    print "Costing str: {}".format(costing_str)
+    if costing_str is not None:
+        time, granularity = re.match(TIME_COSTING_PARSER, costing_str).groups()
+        time = float(time)
+        granularity_translator = {
+                MINUTE_COSTING_INDICATOR : lambda time : int(time),
+                HOUR_COSTING_INDICATOR : lambda time : int(time * 60),
+                DAY_COSTING_INDICATOR : lambda time : int(time * HOURS_IN_DAY * 60),
+                }
+        costing = granularity_translator[granularity.lower()](time)
+    else:
+        costing = 0
+    flags_str = match.group(2)
+    if flags_str is not None:
+        task_flags = [flag for flag in TASK_FLAGS if flag in flags_str]
+    else:
+        task_flags = []
+    return {
+            TASK_COSTING_KEY : costing,
+            TASK_FLAGS_KEY : task_flags,
+            TASK_CONTENTS_KEY : match.group(3),
+            }
+
 def work_email_formatter(tasks, comment=""):
     ''' 
     Formats only the office tasks from the given list of tasks into a list of bullet points for only the office tasks 
@@ -80,6 +126,8 @@ def work_email_formatter(tasks, comment=""):
     '''
     office_tasks_list_of_lists = [ list_tasks for list_title, list_tasks in tasks.iteritems() if list_title.startswith(OFFICE_LIST_TITLE_PREFIX) ]
     office_tasks = list(chain(*office_tasks_list_of_lists))
+    # TODO Make filtering functions like this actual functions
+    office_tasks = [task for task in office_tasks if SENSITIVE_TASK_FLAG not in parse_task(task)[TASK_FLAGS_KEY]]
     task_formatter = lambda task : u"\u2022 {}".format(task[wunderclient.Task.title])
     task_strs = map(task_formatter, office_tasks)
     return u'{}\n{}'.format(comment, u'\n'.join(task_strs))
