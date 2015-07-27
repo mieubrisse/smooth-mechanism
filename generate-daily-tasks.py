@@ -86,12 +86,10 @@ def task_due_filter(task):
 def parse_task(task):
     ''' Parses the task into an object containing the task's time costing in minutes, flags, and contents, or None if the task could not be parsed '''
     title = task[wunderclient.Task.title]
-    print "Title: {}".format(title)
     match = re.match(TASK_PARSER, title)
     if match is None:
         return None
     costing_str = match.group(1)
-    print "Costing str: {}".format(costing_str)
     if costing_str is not None:
         time, granularity = re.match(TIME_COSTING_PARSER, costing_str).groups()
         time = float(time)
