@@ -1,0 +1,9 @@
+---
+exchange_server_url: https://foo.bar/EWS/Exchange.asmx
+domain: FOOBAR
+username: foo
+password: bar
+
+# ID of Wunderlist list to store meeting tasks to
+# Maybe in the future, have fine-grained control, e.g. "if this, then this list"?
+wunderlist_list_id: 1234
