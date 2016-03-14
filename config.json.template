@@ -1,6 +1,0 @@
-{
-    "smooth_mechanism_dirpath": "/foo/bar/bang",
-    "dest_email_address": "somelist@gmail.com",
-    "wunderlist_client_id" : "123abc",
-    "wunderlist_access_token" : "123abc"
-}

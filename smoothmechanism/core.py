@@ -1,18 +1,16 @@
+"""
+Description: 
+Defines how the Smooth Mechanism system ought to work so tools 
+in the ecosystem can take advantage of common functionality
+
+Author: mieubrisse
+"""
+
+import wunderpy2
 import json
 import os.path
-import wunderclient
 import datetime
 import re
-
-def enum(**enums):
-    return type('Enum', (), enums)
-
-ConfigKey = enum(
-    SMOOTH_MECHANISM_DIRPATH = "smooth_mechanism_dirpath",
-    DEST_EMAIL_ADDR = "dest_email_address",
-    WUNDERLIST_CLIENT_ID = "wunderlist_client_id",
-    WUNDERLIST_ACCESS_TOKEN = "wunderlist_access_token",
-    )
 
 SENSITIVE_TASK_FLAG = "!"
 TASK_FLAGS = [SENSITIVE_TASK_FLAG]
@@ -28,20 +26,24 @@ TASK_COSTING_KEY = 'time_costing'
 TASK_FLAGS_KEY = 'flags'
 TASK_CONTENTS_KEY = 'contents'
 
-def get_config(config_filepath):
-    with open(config_filepath) as config_fp:
-        return json.load(config_fp)
+def is_task_due(task, api):
+    """ 
+    Returns True if the task is due today or prior, False otherwise 
 
-def task_due_filter(task):
-    ''' Returns True if the task is due today or prior, False otherwise '''
-    if wunderclient.Task.due_date not in task:
+    Args:
+    task -- Task to check if due today
+    api -- Wunderpy2 API the task came from
+    """
+    if wunderpy2.Task.DUE_DATE not in task:
         return False
-    due_date = datetime.datetime.strptime(str(task[wunderclient.Task.due_date]), wunderclient.DATE_FORMAT).date()
+    due_date = datetime.datetime.strptime(str(task[wunderpy2.Task.DUE_DATE]), api.DATE_FORMAT).date()
     return due_date <= datetime.date.today()
 
 def parse_task(task):
-    ''' Parses the task into an object containing the task's time costing in minutes, flags, and contents, or None if the task could not be parsed '''
-    title = task[wunderclient.Task.title]
+    """ 
+    Parses the task into an object containing the task's time costing in minutes, flags, and contents, or None if the task could not be parsed 
+    """
+    title = task[wunderpy2.Task.TITLE]
     match = re.match(TASK_PARSER, title)
     if match is None:
         return None

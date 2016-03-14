@@ -1,15 +1,15 @@
 import wunderpy2
 import pyexchange
-import config
 import datetime
 import sys
 import re
 import math
 import os.path
+import argparse
 
-script_dir = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.abspath(os.path.join(script_dir, os.path.pardir)))
-import smoothmechanism as sm
+# Local imports
+# TODO Make this follow relative import format
+import config as sm_config
 
 FORWARDED_EVENT_SUBJECT_PREFIX = "FW: "
 
@@ -46,20 +46,18 @@ def _format_event(event):
     end = event.end
     duration = end - start;
     pretty_duration = _format_duration(duration.seconds)
-    # duration_hours = 
 
     return "{} - Meeting: {}".format(pretty_duration, event_info)
 
 def main(argv=sys.argv):
     # Connect to Outlook
-    username = "{}\\{}".format(config.DOMAIN, config.USERNAME)
-    connection = pyexchange.ExchangeNTLMAuthConnection(url=config.EXCHANGE_SERVER_URL, username=username, password=config.PASSWORD)
+    username = "{}\\{}".format(sm_config.DOMAIN, sm_config.USERNAME)
+    connection = pyexchange.ExchangeNTLMAuthConnection(url=sm_config.EXCHANGE_SERVER_URL, username=username, password=sm_config.PASSWORD)
     calendar = pyexchange.Exchange2010Service(connection).calendar()
 
     # Connect to Wunderlist
-    sm_config = sm.get_config(os.path.abspath(os.path.join(script_dir, os.path.pardir, "config.json")))
-    access_token = sm_config[sm.ConfigKey.WUNDERLIST_ACCESS_TOKEN]
-    client_id = sm_config[sm.ConfigKey.WUNDERLIST_CLIENT_ID]
+    access_token = sm_config.WUNDERLIST_ACCESS_TOKEN
+    client_id = sm_config.WUNDERLIST_CLIENT_ID
     wunderlist_api = wunderpy2.WunderApi()
     wunderlist_client = wunderlist_api.get_client(access_token, client_id)
 
@@ -71,10 +69,10 @@ def main(argv=sys.argv):
         if event.is_all_day:
             continue
         task_title = _format_event(event)
-        task = wunderlist_client.create_task(config.WUNDERLIST_LIST_ID, task_title, due_date=today.strftime(wunderlist_api.DATE_FORMAT))
-        # wunderlist_task_title = 
+        task = wunderlist_client.create_task(sm_config.WUNDERLIST_LIST_ID, task_title, due_date=today.strftime(wunderlist_api.DATE_FORMAT))
+
     # Strip events we're not interested in
-    # Filter by 'availability' keyword here, if desired
+    # TODO Filter by 'availability' keyword here, if desired
 
 if __name__ == "__main__":
     sys.exit(main())

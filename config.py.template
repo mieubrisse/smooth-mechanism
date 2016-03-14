@@ -1,0 +1,21 @@
+# URL of exchange server
+EXCHANGE_SERVER_URL = "https://exchange.foo.com/EWS/Exchange.asmx"
+
+# Exchange domain
+DOMAIN = "MyDomain"
+
+USERNAME = "foo"
+PASSWORD = "bar"
+
+# ID of Wunderlist list that the tasks will be added to
+WUNDERLIST_LIST_ID = 1234
+
+# Directory to store records of what tasks were costed for a given day
+SMOOTH_MECHANISM_DIRPATH = "/foo/bar/bang"
+
+# Email to send morning costing email to
+DEST_EMAIL_ADDR = "foobar@gmail.com"
+
+# Wunderlist creds
+WUNDERLIST_CLIENT_ID = "1234"
+WUNDERLIST_ACCESS_TOKEN = "5678"
