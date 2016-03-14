@@ -1,3 +1,3 @@
 #!/bin/bash
-SCRIPT_DIR="$(cd $(dirname ${0}) && pwd)"
-python ${SCRIPT_DIR}/morning-review.py ${SCRIPT_DIR}/config.json
+script_dir="$(cd $(dirname ${0}) && pwd)"
+python ${script_dir}/morning-review.py
