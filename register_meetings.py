@@ -64,7 +64,11 @@ def main(argv=sys.argv):
     today = datetime.date.today()
     local_day_start = datetime.datetime.combine(today, datetime.time(0,0))
     local_day_end = datetime.datetime.combine(today, datetime.time(23,59))
+
+    print "INFO: Getting today's meetings from Exchange..."
     todays_events = calendar.list_events(start=local_day_start, end=local_day_end)
+
+    print "INFO: Storing today's meetings in Wunderlist..."
     for event in todays_events.events:
         if event.is_all_day:
             continue
