@@ -17,14 +17,16 @@ import re
 import smoothmechanism.core as sm_core
 import config as sm_config
 
-# Constants related to sending the office tasks daily status email
-OFFICE_LIST_TITLE_PREFIX = "Office/"
+# Constants related to sending the work tasks daily status email
+LIST_TITLE_PREFIXES = [ "Onsite/", "Office/" ]  # Which lists do we send an email for?
 EMAIL_SUBJECT_DATE_FORMAT = '%Y/%m/%d'
 EMAIL_SUBJECT_FORMAT_STR = "Today's Goals: {}"
+EMAIL_TASK_FORMATTER = lambda task : u"\u2022 {}".format(task[wunderpy2.Task.TITLE])
 
 # Constants related to writing daily tasks to file
 OUTPUT_FILE_DATE_FORMAT = '%Y-%m-%d'
 OUTPUT_FILENAME_FORMAT_STR = '{}_tasks.md'
+DAILY_TASK_LOG_TASK_FORMATTER = lambda task : u'* {}'.format(task[wunderpy2.Task.TITLE])
 
 # Constants related to writing the checkpoint file written every morning and (hopefully) cleaned up every night
 CHECKPOINT_FILE_DATE_FORMAT = '%Y-%m-%d'
@@ -50,7 +52,7 @@ def _validate_args(args):
     # TODO Check to make sure the email is in proper format
     return None
 
-def work_email_formatter(tasks, api, comment=""):
+def work_email_formatter(tasks, api):
     ''' 
     Formats only the office tasks from the given list of tasks into a list of bullet points for only the office tasks 
     
@@ -60,14 +62,23 @@ def work_email_formatter(tasks, api, comment=""):
 
     Keyword args:
     comment -- comment to put at the top of the email
+
+    Return:
+    Text of email containing work tasks
     '''
-    office_tasks_list_of_lists = [ list_tasks for list_title, list_tasks in tasks.iteritems() if list_title.startswith(OFFICE_LIST_TITLE_PREFIX) ]
-    office_tasks = list(chain(*office_tasks_list_of_lists))
-    # TODO Make filtering functions like this actual functions
-    office_tasks = [task for task in office_tasks if sm_core.SENSITIVE_TASK_FLAG not in sm_core.parse_task(task)[sm_core.TASK_FLAGS_KEY]]
-    task_formatter = lambda task : u"\u2022 {}".format(task[wunderpy2.Task.TITLE])
-    task_strs = map(task_formatter, office_tasks)
-    return u'{}\n{}'.format(comment, u'\n'.join(task_strs))
+    list_tasks = {}
+    sections_text = []
+    for list_title_prefix in LIST_TITLE_PREFIXES:
+        work_tasks_list_of_lists = [ list_tasks for list_title, list_tasks in tasks.iteritems() if list_title.startswith(list_title_prefix) ]
+        work_tasks = list(chain(*work_tasks_list_of_lists))
+
+        # TODO Make the functions that get applied to a task for a flag a first-class thing in the code, instead of hardcoding the behaviour here
+        work_tasks = [task for task in work_tasks if sm_core.SENSITIVE_TASK_FLAG not in sm_core.parse_task(task)[sm_core.TASK_FLAGS_KEY]]
+        task_strs = map(EMAIL_TASK_FORMATTER, work_tasks)
+        section_header = list_title_prefix.strip('/') + ':'
+        sections_text.append(u'{}\n{}'.format(section_header, u'\n'.join(task_strs)))
+
+    return u'\n\n'.join(sections_text)
 
 def open_work_tasks_email(todays_tasks, api, addressee):
     '''
@@ -90,9 +101,11 @@ def daily_task_log_formatter(tasks):
 
     Params:
     tasks -- dict of (Wunderlist list title, [tasks in list...] ) pairs
+
+    Return:
+    Body to write to 
     '''
-    task_formatter = lambda task : u'* {}'.format(task[wunderpy2.Task.TITLE])
-    list_formatter = lambda list_title, tasks : u'{}\n{}'.format('## ' + list_title, u'\n'.join(map(task_formatter, tasks)))
+    list_formatter = lambda list_title, tasks : u'{}\n{}'.format('## ' + list_title, u'\n'.join(map(DAILY_TASK_LOG_TASK_FORMATTER, tasks)))
     list_strs = [ list_formatter(list_title, list_tasks) for list_title, list_tasks in tasks.iteritems() ]
     output = '\n\n'.join(list_strs) + '\n'
     return output
