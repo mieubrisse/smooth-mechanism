@@ -71,6 +71,8 @@ def work_email_formatter(tasks, api):
     for list_title_prefix in LIST_TITLE_PREFIXES:
         work_tasks_list_of_lists = [ list_tasks for list_title, list_tasks in tasks.iteritems() if list_title.startswith(list_title_prefix) ]
         work_tasks = list(chain(*work_tasks_list_of_lists))
+        if len(work_tasks) == 0:
+            continue
 
         # TODO Make the functions that get applied to a task for a flag a first-class thing in the code, instead of hardcoding the behaviour here
         work_tasks = [task for task in work_tasks if sm_core.SENSITIVE_TASK_FLAG not in sm_core.parse_task(task)[sm_core.TASK_FLAGS_KEY]]
