@@ -18,7 +18,7 @@ import smoothmechanism.core as sm_core
 import config as sm_config
 
 # Constants related to sending the work tasks daily status email
-LIST_TITLE_PREFIXES = [ "Onsite/", "Office/" ]  # Which lists do we send an email for?
+LIST_TITLE_PREFIXES = [ "Client/", "Office/" ]  # Which lists do we send an email for?
 EMAIL_SUBJECT_DATE_FORMAT = '%Y-%m-%d'
 EMAIL_SUBJECT_FORMAT_STR = "Today's Goals: {}"
 EMAIL_TASK_FORMATTER = lambda task : u"\u2022 {}".format(task[wunderpy2.Task.TITLE])
