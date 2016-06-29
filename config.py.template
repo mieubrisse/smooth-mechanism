@@ -19,3 +19,10 @@ DEST_EMAIL_ADDR = "foobar@gmail.com"
 # Wunderlist creds
 WUNDERLIST_CLIENT_ID = "1234"
 WUNDERLIST_ACCESS_TOKEN = "5678"
+
+# Habitica creds
+HABITICA_CLIENT_ID = "1234"
+HABITICA_ACCESS_TOKEN = "5678"
+
+# Wunderlist-Habitica link filepath
+WUNDERLIST_HABITICA_LINK_FILEPATH = "/foo/bar/bang"

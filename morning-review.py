@@ -1,5 +1,5 @@
 # This script will pull down Wunderlist tasks, find the ones slated for today, email them to a given email address, and log them to a file
-# TODO Create a Smooth Mechanism client that reads config files and all that jazz so we don't have to pass crap around everywhere
+# TODO Create a Smooth Mechanism client that abstracts away the underlying system
 
 import wunderpy2
 import sys
@@ -75,7 +75,7 @@ def work_email_formatter(tasks, api):
             continue
 
         # TODO Make the functions that get applied to a task for a flag a first-class thing in the code, instead of hardcoding the behaviour here
-        work_tasks = [task for task in work_tasks if sm_core.SENSITIVE_TASK_FLAG not in sm_core.parse_task(task)[sm_core.TASK_FLAGS_KEY]]
+        work_tasks = [task for task in work_tasks if sm_core.SENSITIVE_TASK_FLAG not in sm_core.parse_wunderlist_task_text(task[wunderpy2.Task.TITLE])[sm_core.TASK_FLAGS_KEY]]
         task_strs = map(EMAIL_TASK_FORMATTER, work_tasks)
         section_header = list_title_prefix.strip('/') + ':'
         sections_text.append(u'{}\n{}'.format(section_header, u'\n'.join(task_strs)))
@@ -147,7 +147,7 @@ def main(argv):
     client = api.get_client(access_token, client_id)
     wunder_lists = client.get_lists()
     todays_tasks = {}   # Dict mapping list name -> [tasks...] for lists with tasks due today (or before)
-    task_due_filter = lambda task: sm_core.is_task_due(task, api)
+    task_due_filter = lambda task: sm_core.is_wunderlist_task_due(task, api)
     for wunder_list in wunder_lists:
         list_tasks = client.get_tasks(wunder_list[wunderpy2.List.ID])
         list_due_tasks = filter(task_due_filter, list_tasks)
