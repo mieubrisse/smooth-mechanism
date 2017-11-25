@@ -9,7 +9,7 @@ import argparse
 
 # Local imports
 # TODO Make this follow relative import format
-import config as sm_config
+import smooth_mechanism_config as sm_config
 
 FORWARDED_EVENT_SUBJECT_PREFIX = "FW: "
 
